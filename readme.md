@@ -1,5 +1,3 @@
-# Servo-based PWM Controller
-
 TODO describe control logic
 
 ## Compile/Upload
