@@ -55,6 +55,10 @@ long step_last_changed = 0;
 volatile unsigned long pwm_input_duty_in_us = 0;
 volatile unsigned long pwm_start_time = 0;
 
+unsigned long mode_changed_time = 0;
+const int MODE_CHANGE_TIMEDELTA_IN_MS = 100;
+unsigned long last_edge_time = 0;
+
 #ifdef DEBUG
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__)
 #include <DigiKeyboard.h>
@@ -73,7 +77,6 @@ volatile unsigned long pwm_start_time = 0;
 #define DEBUG_PRINTLN(x)
 #endif
 
-unsigned long last_edge_time = 0;
 // interrupt routing to calculate the duty length in us
 void handle_pwm_input_interrupt() {
 
@@ -199,8 +202,6 @@ void update_pwm_output(int pwm)
 
 }
 
-unsigned long mode_changed_time = 0;
-const int MODE_CHANGE_TIMEDELTA_IN_MS = 100;
 
 void loop() {
 
