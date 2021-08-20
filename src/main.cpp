@@ -41,22 +41,22 @@ const int PWM_CTL_HYSTERESIS = 100; /* in us */
 
 // delay on each iteration
 const int LOOP_DELAY_IN_MS = 200;      /* in ms */
-const int SHORT_PRESS_TIME_IN_MS = 50; /* in ms */
-const int LONG_PRESS_TIME_IN_MS = 1000; /* in ms */
+const int LONG_PRESS_TIME_IN_MS = 800; /* in ms */
+const int MODE_CHANGE_TIMEDELTA_IN_MS = 100;
+
 // single step pwm delta
 const int PWM_STEPSIZE = 50; /* in us */
 
 // state variables
 int pwm_output_pulse_width_in_us = PWM_CENTER; /* in us */
 // long mode_last_changed_in_ms = 0;
-long step_last_changed_in_ms = 0;
+long step_last_changed_timestamp_in_ms = 0;
 
 // last pwm duty time
 volatile unsigned long pwm_input_pulse_width_in_us = 0;
 volatile unsigned long pwm_input_pulse_start_in_us = 0;
 
 unsigned long pwm_input_mode_zero_timestamp_in_ms = 0;
-const int MODE_CHANGE_TIMEDELTA_IN_MS = 100;
 
 #ifdef DEBUG
 #if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__)
@@ -129,10 +129,10 @@ void setup() {
 // return the pwm value based on the irq handler and reset it to 0
 int get_pwm_duty_time_in_us() {
 
-  // reset when last edge is long ago...
+  // reset when last edge is long ago...(1sec)
   if (pwm_input_pulse_start_in_us + 1000L*1000L < micros())
   {
-    // pwm_out_duty_in_us = 0;
+    pwm_input_pulse_width_in_us = 0;
   }
 
   return pwm_input_pulse_width_in_us;
@@ -188,8 +188,6 @@ void update_pwm_output(int pwm_width_in_us)
 
   int pwm_width_rounded_in_us = int(pwm_width_in_us / PWM_STEPSIZE) * PWM_STEPSIZE;
 
-  // pwm_r = 1300;
-
   do_soft_pwm(PWM_OUTPUT_PIN, pwm_width_rounded_in_us);
   // calculate the reverse pwm_r value
   int pwm_width_reversed_in_us = PWM_UPPER_BOUND - (pwm_width_rounded_in_us - PWM_LOWER_BOUND);
@@ -219,11 +217,11 @@ void loop() {
     DEBUG_PRINT("pwm_offset: ");
     DEBUG_PRINTLN(pwm_offset_in_us);
 
-    if (input_mode_nonzero_timedelta_in_ms > SHORT_PRESS_TIME_IN_MS) {
+    // if (input_mode_nonzero_timedelta_in_ms > SHORT_PRESS_TIME_IN_MS) {
       pwm_output_pulse_width_in_us =
           min(max(pwm_output_pulse_width_in_us + pwm_offset_in_us, PWM_LOWER_BOUND), PWM_UPPER_BOUND);
-      step_last_changed_in_ms = millis();
-    }
+      step_last_changed_timestamp_in_ms = millis();
+    // }
 
     // long press -> output to upper or lower bounds
     if (input_mode_nonzero_timedelta_in_ms > LONG_PRESS_TIME_IN_MS) {
